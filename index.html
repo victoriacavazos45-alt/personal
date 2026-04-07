@@ -1,501 +1,469 @@
-import { useState, useEffect, useRef } from "react";
-
-const SECTIONS = ["about", "experience", "writing", "world", "contact"];
-
-// Custom cursor component
-function CustomCursor() {
-  const [pos, setPos] = useState({ x: -100, y: -100 });
-  const [hovering, setHovering] = useState(false);
-  const [visible, setVisible] = useState(false);
-
-  useEffect(() => {
-    const isTouchDevice = "ontouchstart" in window;
-    if (isTouchDevice) return;
-    setVisible(true);
-
-    const move = (e) => setPos({ x: e.clientX, y: e.clientY });
-    const over = (e) => {
-      if (e.target.closest("a, button, [role='button']")) setHovering(true);
-    };
-    const out = (e) => {
-      if (e.target.closest("a, button, [role='button']")) setHovering(false);
-    };
-
-    window.addEventListener("mousemove", move);
-    document.addEventListener("mouseover", over);
-    document.addEventListener("mouseout", out);
-    return () => {
-      window.removeEventListener("mousemove", move);
-      document.removeEventListener("mouseover", over);
-      document.removeEventListener("mouseout", out);
-    };
-  }, []);
-
-  if (!visible) return null;
-
-  const arrowSvg = hovering ? (
-    <svg width="40" height="48" viewBox="0 0 20 24" fill="none" style={{ imageRendering: "pixelated" }}>
-      <path d="M6 1L6 15L9 12L12 19L14 18L11 11L15 11L6 1Z" fill="white" stroke="black" strokeWidth="1.2" />
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Victoria Cavazos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:ital,wght@0,400;0,500;0,700;1,400&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body { overflow-x: hidden; font-family: 'DM Sans', 'Helvetica Neue', Arial, sans-serif; background: #fff; color: #0A0A0A; }
+  body.use-custom-cursor, body.use-custom-cursor *, body.use-custom-cursor *::before, body.use-custom-cursor *::after { cursor: none !important; }
+  a:hover { opacity: 0.8; }
+  ::selection { background: #0077B6; color: white; }
+ 
+  /* Scroll margin so sections aren't hidden behind fixed nav */
+  section { scroll-margin-top: 64px; }
+ 
+  /* Custom cursor */
+  #cursor { position: fixed; pointer-events: none; z-index: 99999; transform: translate(-2px, -2px); transition: transform 0.05s ease-out; top: -100px; left: -100px; }
+ 
+  /* Animations */
+  @keyframes fadeInUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes scrollBounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(8px); } }
+ 
+  .fade-in { opacity: 0; transform: translateY(24px); transition: opacity 0.7s ease, transform 0.7s ease; }
+  .fade-in.visible { opacity: 1; transform: translateY(0); }
+ 
+  /* Nav */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+    background: transparent;
+    transition: all 0.3s ease;
+    padding: 14px clamp(20px, 5vw, 64px);
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  nav.scrolled { background: rgba(255,255,255,0.95); backdrop-filter: blur(8px); }
+  .nav-brand { font-family: 'Space Mono', monospace; font-size: 13px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: #fff; cursor: pointer; background: none; border: none; }
+  nav.scrolled .nav-brand { color: #0A0A0A; }
+  .nav-links { display: flex; gap: 28px; align-items: center; }
+  .nav-link { position: relative; text-decoration: none; color: #fff; font-family: 'Space Mono', monospace; font-size: 13px; letter-spacing: 0.06em; padding: 4px 0; cursor: pointer; background: none; border: none; }
+  nav.scrolled .nav-link { color: #0A0A0A; }
+  .nav-link::after { content: ''; position: absolute; bottom: -2px; left: 0; width: 0; height: 2px; background: #0077B6; transition: width 0.3s ease; }
+  .nav-link:hover::after { width: 100%; }
+  .mobile-toggle { display: none; font-family: 'Space Mono', monospace; font-size: 20px; color: #fff; background: none; border: none; cursor: pointer; }
+  nav.scrolled .mobile-toggle { color: #0A0A0A; }
+ 
+  /* Mobile menu */
+  #mobile-menu { display: none; position: fixed; inset: 0; z-index: 9999; background: #0A0A0A; flex-direction: column; justify-content: center; align-items: center; gap: 32px; }
+  #mobile-menu.open { display: flex; }
+  .mobile-close { position: absolute; top: 16px; right: 24px; font-family: 'Space Mono', monospace; font-size: 24px; color: #fff; background: none; border: none; cursor: pointer; }
+  .mobile-nav-link { font-family: 'Instrument Serif', Georgia, serif; font-size: 36px; color: #fff; text-decoration: none; cursor: pointer; background: none; border: none; }
+ 
+  /* Hero */
+  #hero {
+    min-height: 100vh; position: relative; display: flex; flex-direction: column;
+    justify-content: center; align-items: center; text-align: center;
+    background: linear-gradient(to bottom, rgba(10,10,10,0.78), rgba(10,10,10,0.85)), url('images/hero-lcs19.jpeg') center/cover;
+    padding: 0 24px;
+    scroll-margin-top: 0;
+  }
+  .hero-inner { animation: fadeInUp 1s ease; }
+  .hero-name { font-family: 'Instrument Serif', Georgia, serif; font-size: clamp(56px, 12vw, 140px); line-height: 0.92; color: #fff; font-weight: 400; margin-bottom: 24px; }
+  .hero-sub { font-family: 'Space Mono', monospace; font-size: clamp(10px, 2.5vw, 14px); letter-spacing: 0.18em; color: rgba(255,255,255,0.5); text-transform: lowercase; }
+  .scroll-arrow { position: absolute; bottom: 32px; animation: scrollBounce 2s ease infinite; }
+ 
+  /* Intro */
+  .intro { padding: clamp(64px, 10vw, 120px) clamp(24px, 8vw, 200px); max-width: 860px; margin: 0 auto; }
+  .intro-text { font-family: 'Instrument Serif', Georgia, serif; font-size: clamp(20px, 2.8vw, 28px); line-height: 1.6; color: #0A0A0A; font-style: italic; }
+  .press-row { display: flex; justify-content: center; gap: clamp(16px, 3vw, 40px); flex-wrap: wrap; margin-top: 48px; }
+  .press-name { font-family: 'Space Mono', monospace; font-size: 11px; letter-spacing: 0.14em; color: #9CA3AF; text-transform: uppercase; }
+ 
+  /* About */
+  #about { background: #F5F0E8; padding: clamp(64px, 10vw, 120px) clamp(24px, 8vw, 120px); }
+  #about .inner { max-width: 900px; margin: 0 auto; }
+  .section-title { font-family: 'Instrument Serif', Georgia, serif; font-size: clamp(36px, 6vw, 64px); margin-bottom: 48px; line-height: 1; }
+  .about-grid { display: flex; gap: 48px; flex-wrap: wrap; align-items: flex-start; }
+  .about-photo-wrap { flex: 0 0 auto; width: clamp(200px, 30vw, 300px); }
+  .about-photo { width: 100%; aspect-ratio: 3/4; transform: rotate(-2deg); border: 3px solid #0A0A0A; object-fit: cover; display: block; }
+  .about-text { flex: 1; min-width: 280px; }
+  .about-text p { font-family: 'DM Sans', sans-serif; font-size: 16px; line-height: 1.8; color: #4B5563; margin-bottom: 20px; }
+  .stat-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 32px; margin-top: 64px; text-align: center; }
+  .stat-number { font-family: 'Instrument Serif', Georgia, serif; font-size: clamp(48px, 8vw, 80px); line-height: 1; color: #0A0A0A; }
+  .stat-label { font-family: 'Space Mono', monospace; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: #9CA3AF; margin-top: 6px; }
+  .credentials { margin-top: 56px; font-family: 'Space Mono', monospace; font-size: 12px; color: #9CA3AF; letter-spacing: 0.04em; line-height: 2; }
+ 
+  /* Experience */
+  #experience { padding: clamp(64px, 10vw, 120px) clamp(24px, 8vw, 120px); }
+  #experience .inner { max-width: 800px; margin: 0 auto; }
+  .exp-entry { margin-bottom: 64px; position: relative; }
+  .exp-title { font-family: 'Instrument Serif', Georgia, serif; font-size: clamp(28px, 4vw, 40px); line-height: 1.15; margin-bottom: 8px; color: #0A0A0A; }
+  .exp-meta { font-family: 'Space Mono', monospace; font-size: 12px; color: #9CA3AF; letter-spacing: 0.05em; margin-bottom: 4px; }
+  .exp-countries { font-family: 'Space Mono', monospace; font-size: 11px; color: #0077B6; letter-spacing: 0.08em; margin-bottom: 16px; }
+  .exp-body { font-family: 'DM Sans', sans-serif; font-size: 16px; line-height: 1.7; color: #4B5563; max-width: 640px; }
+  .exp-metric { font-family: 'Instrument Serif', Georgia, serif; font-size: clamp(48px, 6vw, 72px); color: #0A0A0A; line-height: 1; margin-top: 16px; opacity: 0.1; position: absolute; right: 0; top: 0; }
+  .additional { border-top: 1px solid #E5E7EB; padding-top: 48px; margin-top: 16px; font-family: 'Space Mono', monospace; font-size: 12px; color: #9CA3AF; line-height: 2.2; letter-spacing: 0.04em; }
+ 
+  /* Writing */
+  #writing { background: #F5F0E8; padding: clamp(64px, 10vw, 120px) clamp(24px, 8vw, 120px); }
+  #writing .inner { max-width: 720px; margin: 0 auto; }
+  .writing-entry { margin-bottom: 48px; padding-bottom: 48px; border-bottom: 1px solid #E5E7EB; }
+  .writing-title { font-family: 'Instrument Serif', Georgia, serif; font-size: clamp(22px, 3vw, 32px); line-height: 1.2; margin-bottom: 8px; }
+  .writing-title a { color: #0A0A0A; text-decoration: none; }
+  .writing-meta { font-family: 'Space Mono', monospace; font-size: 12px; color: #9CA3AF; letter-spacing: 0.05em; margin-bottom: 4px; }
+  .writing-award { font-family: 'DM Sans', sans-serif; font-size: 13px; font-style: italic; color: #0077B6; margin-bottom: 12px; }
+  .writing-summary { font-family: 'DM Sans', sans-serif; font-size: 15px; line-height: 1.7; color: #4B5563; margin: 0 0 12px; }
+  .writing-link { font-family: 'Space Mono', monospace; font-size: 13px; color: #0077B6; text-decoration: none; letter-spacing: 0.03em; }
+ 
+  /* World */
+  #world { padding: clamp(64px, 10vw, 120px) clamp(24px, 8vw, 120px); }
+  #world .inner { max-width: 800px; margin: 0 auto; }
+  .world-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 32px; margin-bottom: 56px; }
+  .region-label { font-family: 'Space Mono', monospace; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: #9CA3AF; margin-bottom: 12px; }
+  .place-name { font-family: 'Instrument Serif', Georgia, serif; font-size: 20px; color: #0A0A0A; }
+  .place-note { font-family: 'Space Mono', monospace; font-size: 11px; color: #9CA3AF; letter-spacing: 0.04em; margin-bottom: 10px; }
+  .world-quote { text-align: center; font-family: 'Instrument Serif', Georgia, serif; font-size: clamp(24px, 4vw, 40px); font-style: italic; color: #0A0A0A; line-height: 1.3; padding: 32px 0; }
+ 
+  /* Contact */
+  #contact { background: #0A0A0A; color: #fff; padding: clamp(80px, 12vw, 160px) clamp(24px, 8vw, 120px); text-align: center; }
+  #contact h2 { font-family: 'Instrument Serif', Georgia, serif; font-size: clamp(36px, 6vw, 64px); margin-bottom: 20px; line-height: 1; }
+  .contact-sub { font-family: 'DM Sans', sans-serif; font-size: 16px; color: rgba(255,255,255,0.6); margin-bottom: 40px; max-width: 480px; margin-left: auto; margin-right: auto; }
+  .contact-links { font-family: 'Space Mono', monospace; font-size: 14px; letter-spacing: 0.06em; line-height: 2.4; }
+  .contact-links a { color: #0077B6; text-decoration: none; }
+  .contact-links .dim { color: rgba(255,255,255,0.6); }
+  .contact-links .dimmer { color: rgba(255,255,255,0.35); }
+ 
+  /* Footer */
+  footer { background: #0A0A0A; border-top: 1px solid rgba(255,255,255,0.08); padding: 24px; text-align: center; }
+  footer div { font-family: 'Space Mono', monospace; font-size: 11px; color: rgba(255,255,255,0.25); letter-spacing: 0.08em; }
+ 
+  /* Responsive */
+  @media (max-width: 768px) {
+    .nav-links { display: none; }
+    .mobile-toggle { display: block; }
+    .hero-name { font-size: clamp(44px, 14vw, 72px) !important; }
+    .hero-sub { font-size: 10px; letter-spacing: 0.12em; }
+    .intro { padding: 48px 24px; }
+    .intro-text { font-size: clamp(18px, 4.5vw, 22px); }
+    #about { padding: 48px 24px; }
+    .about-grid { flex-direction: column; gap: 32px; }
+    .about-photo-wrap { width: 100%; max-width: 260px; margin: 0 auto; }
+    .about-photo { aspect-ratio: 4/5; }
+    .about-text { min-width: unset; }
+    .about-text p { font-size: 15px; }
+    .stat-grid { grid-template-columns: repeat(3, 1fr); gap: 20px; margin-top: 40px; }
+    .stat-number { font-size: clamp(36px, 9vw, 56px); }
+    .stat-label { font-size: 9px; }
+    .credentials { font-size: 11px; margin-top: 40px; }
+    #experience { padding: 48px 24px; }
+    .exp-metric { display: none; }
+    .exp-title { font-size: clamp(22px, 6vw, 32px); }
+    .exp-body { font-size: 15px; max-width: 100%; }
+    .additional { font-size: 11px; }
+    #writing { padding: 48px 24px; }
+    .writing-title { font-size: clamp(19px, 5vw, 26px); }
+    .writing-summary { font-size: 14px; }
+    #world { padding: 48px 24px; }
+    .world-grid { grid-template-columns: 1fr; gap: 24px; }
+    .world-quote { font-size: clamp(20px, 5.5vw, 30px); }
+    #contact { padding: 64px 24px; }
+    .contact-links { font-size: 12px; letter-spacing: 0.02em; word-break: break-all; }
+    .contact-sub { font-size: 15px; }
+    .press-row { gap: 12px; }
+    .press-name { font-size: 10px; }
+  }
+ 
+  @media (max-width: 400px) {
+    .hero-name { font-size: 40px !important; }
+    .stat-grid { grid-template-columns: repeat(2, 1fr); }
+    .about-photo-wrap { max-width: 200px; }
+  }
+ 
+  @media (min-width: 769px) {
+    .mobile-toggle { display: none; }
+  }
+</style>
+</head>
+<body>
+ 
+<div id="cursor">
+  <svg id="cursor-normal" width="36" height="44" viewBox="0 0 18 22" fill="none" style="image-rendering:pixelated">
+    <path d="M1 1L1 17L5 13L8 20L10 19L7 12L12 12L1 1Z" fill="white" stroke="black" stroke-width="1"/>
+  </svg>
+  <svg id="cursor-hover" width="40" height="48" viewBox="0 0 20 24" fill="none" style="image-rendering:pixelated;display:none">
+    <path d="M6 1L6 15L9 12L12 19L14 18L11 11L15 11L6 1Z" fill="white" stroke="black" stroke-width="1.2"/>
+  </svg>
+</div>
+ 
+<!-- NAV -->
+<nav id="main-nav">
+  <button class="nav-brand" onclick="navScrollTo('hero')">VICTORIA CAVAZOS</button>
+  <div class="nav-links">
+    <button class="nav-link" onclick="navScrollTo('about')">about</button>
+    <button class="nav-link" onclick="navScrollTo('experience')">experience</button>
+    <button class="nav-link" onclick="navScrollTo('writing')">writing</button>
+    <button class="nav-link" onclick="navScrollTo('world')">around the world</button>
+    <button class="nav-link" onclick="navScrollTo('contact')">say hi</button>
+  </div>
+  <button class="mobile-toggle" onclick="toggleMenu()">≡</button>
+</nav>
+ 
+<!-- MOBILE MENU -->
+<div id="mobile-menu">
+  <button class="mobile-close" onclick="toggleMenu()">✕</button>
+  <button class="mobile-nav-link" onclick="navScrollTo('about')">About</button>
+  <button class="mobile-nav-link" onclick="navScrollTo('experience')">Experience</button>
+  <button class="mobile-nav-link" onclick="navScrollTo('writing')">Writing</button>
+  <button class="mobile-nav-link" onclick="navScrollTo('world')">Around the World</button>
+  <button class="mobile-nav-link" onclick="navScrollTo('contact')">Say Hi</button>
+</div>
+ 
+<!-- HERO -->
+<section id="hero">
+  <div class="hero-inner">
+    <h1 class="hero-name">Victoria<br>Cavazos</h1>
+    <div class="hero-sub">navy officer · writer · operator · airbnb host</div>
+  </div>
+  <div class="scroll-arrow">
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+      <path d="M10 4L10 16M10 16L5 11M10 16L15 11" stroke="rgba(255,255,255,0.3)" stroke-width="1.5"/>
     </svg>
-  ) : (
-    <svg width="36" height="44" viewBox="0 0 18 22" fill="none" style={{ imageRendering: "pixelated" }}>
-      <path d="M1 1L1 17L5 13L8 20L10 19L7 12L12 12L1 1Z" fill="white" stroke="black" strokeWidth="1" />
-    </svg>
-  );
-
-  return (
-    <div
-      style={{
-        position: "fixed",
-        left: pos.x,
-        top: pos.y,
-        pointerEvents: "none",
-        zIndex: 99999,
-        transform: "translate(-2px, -2px)",
-        transition: "transform 0.05s ease-out",
-      }}
-    >
-      {arrowSvg}
-    </div>
-  );
-}
-
-// Fade-in on scroll
-function FadeIn({ children, className = "", delay = 0 }) {
-  const ref = useRef(null);
-  const [visible, setVisible] = useState(false);
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => { if (entry.isIntersecting) setVisible(true); },
-      { threshold: 0.15 }
-    );
-    if (ref.current) observer.observe(ref.current);
-    return () => observer.disconnect();
-  }, []);
-
-  return (
-    <div
-      ref={ref}
-      className={className}
-      style={{
-        opacity: visible ? 1 : 0,
-        transform: visible ? "translateY(0)" : "translateY(24px)",
-        transition: `opacity 0.7s ease ${delay}s, transform 0.7s ease ${delay}s`,
-      }}
-    >
-      {children}
-    </div>
-  );
-}
-
-// Stat number
-function Stat({ number, label }) {
-  return (
-    <div style={{ textAlign: "center" }}>
-      <div style={{ fontFamily: "'Instrument Serif', 'Playfair Display', Georgia, serif", fontSize: "clamp(48px, 8vw, 80px)", lineHeight: 1, color: "#0A0A0A" }}>{number}</div>
-      <div style={{ fontFamily: "'Space Mono', 'Courier New', monospace", fontSize: "11px", letterSpacing: "0.12em", textTransform: "uppercase", color: "#9CA3AF", marginTop: 6 }}>{label}</div>
-    </div>
-  );
-}
-
-// Experience entry
-function ExperienceEntry({ title, org, dates, location, countries, children, metric, photo }) {
-  return (
-    <FadeIn>
-      <div style={{ marginBottom: 64, position: "relative" }}>
-        <h3 style={{ fontFamily: "'Instrument Serif', 'Playfair Display', Georgia, serif", fontSize: "clamp(28px, 4vw, 40px)", lineHeight: 1.15, marginBottom: 8, color: "#0A0A0A" }}>{title}</h3>
-        <div style={{ fontFamily: "'Space Mono', 'Courier New', monospace", fontSize: "12px", color: "#9CA3AF", letterSpacing: "0.05em", marginBottom: 4 }}>{org} · {dates}</div>
-        <div style={{ fontFamily: "'Space Mono', 'Courier New', monospace", fontSize: "12px", color: "#9CA3AF", letterSpacing: "0.05em", marginBottom: countries ? 4 : 16 }}>{location}</div>
-        {countries && (
-          <div style={{ fontFamily: "'Space Mono', 'Courier New', monospace", fontSize: "11px", color: "#0077B6", letterSpacing: "0.08em", marginBottom: 16 }}>{countries}</div>
-        )}
-        <div style={{ fontFamily: "'DM Sans', 'Helvetica Neue', sans-serif", fontSize: "16px", lineHeight: 1.7, color: "#4B5563", maxWidth: 640 }}>
-          {children}
-        </div>
-        {metric && (
-          <div style={{ fontFamily: "'Instrument Serif', 'Playfair Display', Georgia, serif", fontSize: "clamp(48px, 6vw, 72px)", color: "#0A0A0A", lineHeight: 1, marginTop: 16, opacity: 0.1, position: "absolute", right: 0, top: 0, display: window.innerWidth > 768 ? "block" : "none" }}>{metric}</div>
-        )}
-        {photo && (
-          <div style={{ marginTop: 24, maxWidth: 360 }}>
-            <img src={photo.src} alt={photo.alt} style={{ width: "100%", border: "2px solid #0A0A0A", transform: "rotate(-1.5deg)" }} />
-            <div style={{ fontFamily: "'Space Mono', 'Courier New', monospace", fontSize: "10px", color: "#9CA3AF", marginTop: 6, letterSpacing: "0.05em" }}>{photo.caption}</div>
-          </div>
-        )}
+  </div>
+</section>
+ 
+<!-- INTRO -->
+<section class="intro fade-in">
+  <p class="intro-text">
+    I spent eight years in the Navy running weapons programs, leading engineering teams, and writing the New Year's poem for my ship. I've been to ten countries on three continents, published in Proceedings and Business Insider, and managed a $500M warship's ordnance accountability — I improved it by 30%. Now I'm transitioning to tech, because operational rigor shouldn't stop at the quarterdeck.
+  </p>
+  <div class="press-row">
+    <span class="press-name">Business Insider</span>
+    <span class="press-name">U.S. Naval Institute Proceedings</span>
+    <span class="press-name">The Brownsville Herald</span>
+  </div>
+</section>
+ 
+<!-- ABOUT -->
+<section id="about">
+  <div class="inner">
+    <h2 class="section-title fade-in">About</h2>
+    <div class="about-grid">
+      <div class="about-photo-wrap fade-in">
+        <img
+          class="about-photo"
+          src="https://raw.githubusercontent.com/victoriacavazos45-alt/personal/main/HFAKM8ha0AAegVk.jpeg"
+          alt="Victoria Cavazos"
+        />
       </div>
-    </FadeIn>
-  );
-}
-
-// Writing entry
-function WritingEntry({ title, pub, date, award, summary, url }) {
-  return (
-    <FadeIn>
-      <div style={{ marginBottom: 48, paddingBottom: 48, borderBottom: "1px solid #E5E7EB" }}>
-        <h3 style={{ fontFamily: "'Instrument Serif', 'Playfair Display', Georgia, serif", fontSize: "clamp(22px, 3vw, 32px)", lineHeight: 1.2, marginBottom: 8 }}>
-          <a href={url} target="_blank" rel="noopener noreferrer" style={{ color: "#0A0A0A", textDecoration: "none" }}>{title}</a>
-        </h3>
-        <div style={{ fontFamily: "'Space Mono', 'Courier New', monospace", fontSize: "12px", color: "#9CA3AF", letterSpacing: "0.05em", marginBottom: award ? 4 : 12 }}>{pub} · {date}</div>
-        {award && <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: "13px", fontStyle: "italic", color: "#0077B6", marginBottom: 12 }}>{award}</div>}
-        <p style={{ fontFamily: "'DM Sans', 'Helvetica Neue', sans-serif", fontSize: "15px", lineHeight: 1.7, color: "#4B5563", margin: 0, marginBottom: 12 }}>{summary}</p>
-        <a href={url} target="_blank" rel="noopener noreferrer" style={{ fontFamily: "'Space Mono', monospace", fontSize: "13px", color: "#0077B6", textDecoration: "none", letterSpacing: "0.03em" }}>Read →</a>
+      <div class="about-text fade-in">
+        <p>Eight years as a Surface Warfare Officer. Four deployments — one to the Black Sea aboard USS Ross out of Rota, Spain, and three in the Caribbean and South America on USS Wichita and USS St. Louis. I've walked the streets of Valparaíso, stood watch in the Eastern Mediterranean, and coordinated with Chilean and Peruvian navies in Spanish during UNITAS 2025.</p>
+        <p>I have a B.A. in Spanish from St. Edward's University in Austin. I've written for Proceedings, Business Insider, and the Brownsville Herald. I run a 5-star Airbnb in Jacksonville Beach. I'm currently the Mission Liaison Officer at Littoral Combat Ship Squadron TWO in Mayport, and I'm transitioning out in June 2026.</p>
+        <p>I'm looking for what's next — in planning, business operations, or tech/media. I bring operational rigor, a global perspective, and the ability to write a sentence that people actually want to read.</p>
       </div>
-    </FadeIn>
-  );
-}
-
-export default function App() {
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
-
-  useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 60);
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
-
-  // FIX: Offset scroll position by navbar height so sections aren't hidden behind the fixed nav
-  const scrollTo = (id) => {
-    setMenuOpen(false);
+    </div>
+    <div class="stat-grid fade-in">
+      <div><div class="stat-number">8</div><div class="stat-label">Years Active Duty</div></div>
+      <div><div class="stat-number">4</div><div class="stat-label">Deployments</div></div>
+      <div><div class="stat-number">10+</div><div class="stat-label">Countries</div></div>
+      <div><div class="stat-number">3</div><div class="stat-label">Continents</div></div>
+      <div><div class="stat-number">30%</div><div class="stat-label">Accountability Improvement</div></div>
+    </div>
+    <div class="credentials fade-in">
+      B.A. Spanish — St. Edward's University, Austin TX, 2018<br>
+      NHHC Deck Log Poetry Contest — 3rd Place, 2025<br>
+      USNI D&amp;I Essay Contest — 2nd Prize, 2022<br>
+      TIPA In-Depth Reporting — 3rd Prize<br>
+      Headliners Foundation Stuart Long Scholarship
+    </div>
+  </div>
+</section>
+ 
+<!-- EXPERIENCE -->
+<section id="experience">
+  <div class="inner">
+    <h2 class="section-title fade-in">Experience</h2>
+ 
+    <div class="exp-entry fade-in">
+      <h3 class="exp-title">Mission Liaison Officer</h3>
+      <div class="exp-meta">Cdr, Littoral Combat Ship Squadron TWO · Oct 2025 – Present</div>
+      <div class="exp-meta">Jacksonville, FL</div>
+      <p class="exp-body" style="margin-top:16px">Strategic coordination between LCS operational units and squadron headquarters. Owns planning cycles, readiness reporting, and cross-command alignment. Builds program plans with clear milestones and develops executive briefings that connect performance data to strategic outcomes.</p>
+    </div>
+ 
+    <div class="exp-entry fade-in">
+      <div class="exp-metric">30%</div>
+      <h3 class="exp-title">Weapons Officer &amp; Anti-Terrorism Officer</h3>
+      <div class="exp-meta">USS St. Louis (LCS-19) · Jun 2024 – Oct 2025</div>
+      <div class="exp-meta">Jacksonville, FL → Caribbean, South America</div>
+      <div class="exp-countries">Chile · Peru · Ecuador · Cuba · Curaçao</div>
+      <p class="exp-body">End-to-end program delivery for weapons systems and force protection on a $500M vessel, across 70+ personnel. Inherited a broken ammunition accountability program, redesigned it from scratch, and delivered a 30% improvement to full compliance. Participated in UNITAS 2025. Won 3rd Place in the NHHC Deck Log Poetry Contest.</p>
+    </div>
+ 
+    <div class="exp-entry fade-in">
+      <h3 class="exp-title">Assistant Chief Engineer</h3>
+      <div class="exp-meta">USS Wichita (LCS-13) · Mar 2022 – Jan 2024</div>
+      <div class="exp-meta">Jacksonville, FL → Caribbean, South America</div>
+      <p class="exp-body" style="margin-top:16px">Ran business operations for a 20-person engineering department on a $500M vessel. Managed 10+ complex maintenance availabilities end-to-end. Built KPI dashboards and operational reporting that translated raw data into leadership-ready insights.</p>
+    </div>
+ 
+    <div class="exp-entry fade-in">
+      <h3 class="exp-title">Staff Officer, N6</h3>
+      <div class="exp-meta">Cdr, Naval Surface Squadron 14 · Jun 2020 – Mar 2022</div>
+      <div class="exp-meta">Jacksonville, FL · 12 warships</div>
+      <p class="exp-body" style="margin-top:16px">Central planning and ops coordinator for cyber, comms, and IT across twelve warships. Built governance frameworks, OKR-aligned tracking systems, and executive reporting tools connecting command performance to squadron priorities.</p>
+    </div>
+ 
+    <div class="exp-entry fade-in">
+      <h3 class="exp-title">Strike &amp; Ordnance Officer</h3>
+      <div class="exp-meta">USS Ross (DDG-71) · Aug 2019 – Jun 2020</div>
+      <div class="exp-meta">Rota, Spain → Black Sea, Eastern Med</div>
+      <div class="exp-countries">Spain · Greece · Italy · Romania · Ukraine</div>
+      <p class="exp-body">Forward-deployed to Rota. Managed ordnance accountability and strike planning during Black Sea patrols in a contested, high-readiness environment. Coordinated with NATO allies across Southern and Eastern Europe.</p>
+    </div>
+ 
+    <div class="additional fade-in">
+      <strong style="color:#0A0A0A">Airbnb Co-Host</strong> · Dec 2023 – Present · Jacksonville Beach, FL<br>
+      ~45 stays/year · consistent 5-star reviews · guest experience &amp; pricing optimization<br><br>
+      <strong style="color:#0A0A0A">Freelance Writer</strong> · May 2018 – Present<br>
+      Business Insider · Proceedings (USNI) · The Brownsville Herald<br><br>
+      <strong style="color:#0A0A0A">News Editor</strong> · Hilltop Views, St. Edward's University · 2015–2018 · Austin, TX<br>
+      Award-winning student paper · 50+ articles/year · TIPA 3rd Prize, In-Depth Reporting
+    </div>
+  </div>
+</section>
+ 
+<!-- WRITING -->
+<section id="writing">
+  <div class="inner">
+    <h2 class="section-title fade-in">Writing</h2>
+    <div class="press-row fade-in" style="justify-content:flex-start;margin-bottom:56px;margin-top:0">
+      <span class="press-name">Business Insider</span>
+      <span class="press-name">Proceedings</span>
+      <span class="press-name">The Brownsville Herald</span>
+    </div>
+ 
+    <div class="writing-entry fade-in">
+      <h3 class="writing-title"><a href="https://www.usni.org/magazines/proceedings/2022/july/warrior-toughness-requires-emotional-strength" target="_blank" rel="noopener">Warrior Toughness Requires Emotional Strength</a></h3>
+      <div class="writing-meta">U.S. Naval Institute Proceedings · July 2022</div>
+      <p class="writing-summary">The Navy's Warrior Toughness program — mindfulness, conscious breathing, meditation — is an intentional, actionable skill for high-stress decision-making, not the passive exercise skeptics assume.</p>
+      <a class="writing-link" href="https://www.usni.org/magazines/proceedings/2022/july/warrior-toughness-requires-emotional-strength" target="_blank" rel="noopener">Read →</a>
+    </div>
+ 
+    <div class="writing-entry fade-in">
+      <h3 class="writing-title"><a href="https://www.usni.org/magazines/proceedings/2022/august/mothers-deserve-better-navy" target="_blank" rel="noopener">Mothers Deserve Better from the Navy</a></h3>
+      <div class="writing-meta">U.S. Naval Institute Proceedings · August 2022</div>
+      <div class="writing-award">Diversity &amp; Inclusion Essay Contest — 2nd Prize</div>
+      <p class="writing-summary">The marginalization of motherhood in the Sea Services is draining top talent. Career flexibility and better support for new mothers isn't a perk — it's a retention strategy.</p>
+      <a class="writing-link" href="https://www.usni.org/magazines/proceedings/2022/august/mothers-deserve-better-navy" target="_blank" rel="noopener">Read →</a>
+    </div>
+ 
+    <div class="writing-entry fade-in">
+      <h3 class="writing-title"><a href="https://www.history.navy.mil/research/archives/resources-for-the-fleet/deck-logs/new-years-contest/2025.html" target="_blank" rel="noopener">2025 New Year's Deck Log Entry</a></h3>
+      <div class="writing-meta">Naval History &amp; Heritage Command · January 2025</div>
+      <div class="writing-award">NHHC Deck Log Contest — 3rd Place</div>
+      <p class="writing-summary">Continued a Navy tradition dating to 1926. Selected by NHHC Director Samuel Cox. USS St. Louis (LCS-19).</p>
+      <a class="writing-link" href="https://www.history.navy.mil/research/archives/resources-for-the-fleet/deck-logs/new-years-contest/2025.html" target="_blank" rel="noopener">Read →</a>
+    </div>
+  </div>
+</section>
+ 
+<!-- AROUND THE WORLD -->
+<section id="world">
+  <div class="inner">
+    <h2 class="section-title fade-in">Around the World</h2>
+    <div class="world-grid fade-in">
+      <div>
+        <div class="region-label">Europe</div>
+        <div class="place-name">Spain</div><div class="place-note">Homeport — USS Ross, Rota</div>
+        <div class="place-name">Greece</div><div class="place-note">Operational patrol</div>
+        <div class="place-name">Italy</div><div class="place-note">Operational patrol</div>
+        <div class="place-name">Romania</div><div class="place-note">Black Sea deployment</div>
+        <div class="place-name">Ukraine</div><div class="place-note">Black Sea deployment</div>
+      </div>
+      <div>
+        <div class="region-label">South America</div>
+        <div class="place-name">Chile</div><div class="place-note">UNITAS 2025</div>
+        <div class="place-name">Peru</div><div class="place-note">UNITAS 2025</div>
+        <div class="place-name">Ecuador</div><div class="place-note">UNITAS 2025</div>
+      </div>
+      <div>
+        <div class="region-label">Caribbean &amp; US</div>
+        <div class="place-name">Cuba</div><div class="place-note">Operational deployment</div>
+        <div class="place-name">Curaçao</div><div class="place-note">Operational deployment</div>
+        <div class="place-name">New York City</div><div class="place-note">USS Cooperstown Commissioning</div>
+      </div>
+    </div>
+    <div class="world-quote fade-in">10 countries. 3 continents. 4 deployments.</div>
+  </div>
+</section>
+ 
+<!-- CONTACT -->
+<section id="contact">
+  <h2 class="fade-in">Say Hi</h2>
+  <p class="contact-sub fade-in">I'm leaving the Navy in June 2026. Let's talk about what's next.</p>
+  <div class="contact-links fade-in">
+    <a href="mailto:victoriacavazos45@gmail.com">victoriacavazos45@gmail.com</a><br>
+    <a class="dim" href="https://linkedin.com/in/victoria-nicole-cavazos" target="_blank" rel="noopener">linkedin.com/in/victoria-nicole-cavazos</a><br>
+    <span class="dimmer">Jacksonville, FL</span>
+  </div>
+</section>
+ 
+<!-- FOOTER -->
+<footer>
+  <div>© 2026 Victoria Cavazos</div>
+</footer>
+ 
+<script>
+  // Custom cursor
+  const cursor = document.getElementById('cursor');
+  const cursorNormal = document.getElementById('cursor-normal');
+  const cursorHover = document.getElementById('cursor-hover');
+ 
+  if (!('ontouchstart' in window)) {
+    document.body.classList.add('use-custom-cursor');
+    document.addEventListener('mousemove', (e) => {
+      cursor.style.left = e.clientX + 'px';
+      cursor.style.top = e.clientY + 'px';
+    });
+    document.addEventListener('mouseover', (e) => {
+      if (e.target.closest('a, button, [role="button"]')) {
+        cursorNormal.style.display = 'none';
+        cursorHover.style.display = 'block';
+      }
+    });
+    document.addEventListener('mouseout', (e) => {
+      if (e.target.closest('a, button, [role="button"]')) {
+        cursorNormal.style.display = 'block';
+        cursorHover.style.display = 'none';
+      }
+    });
+  }
+ 
+  // Nav scroll — offset by navbar height so sections land below the fixed bar
+  function navScrollTo(id) {
+    document.getElementById('mobile-menu').classList.remove('open');
+    if (id === 'hero') {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
     const el = document.getElementById(id);
     if (!el) return;
     const navHeight = 64;
     const top = el.getBoundingClientRect().top + window.scrollY - navHeight;
-    window.scrollTo({ top, behavior: "smooth" });
-  };
-
-  const mono = "'Space Mono', 'Courier New', monospace";
-  const serif = "'Instrument Serif', 'Playfair Display', Georgia, serif";
-  const sans = "'DM Sans', 'Helvetica Neue', Arial, sans-serif";
-
-  return (
-    <div style={{ cursor: "none", fontFamily: sans, background: "#fff", color: "#0A0A0A", overflowX: "hidden" }}>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:ital,wght@0,400;0,500;0,700;1,400&family=Space+Mono:wght@400;700&display=swap');
-        *, *::before, *::after { cursor: none !important; box-sizing: border-box; margin: 0; padding: 0; }
-        html { scroll-behavior: smooth; }
-        body { overflow-x: hidden; }
-        a:hover { opacity: 0.8; }
-        ::selection { background: #0077B6; color: white; }
-
-        /* FIX: Ensures native anchor/scroll never hides sections behind fixed nav */
-        section { scroll-margin-top: 64px; }
-
-        @keyframes fadeInUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes scrollBounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(8px); } }
-        @keyframes slideIn { from { opacity: 0; transform: translateX(40px); } to { opacity: 1; transform: translateX(0); } }
-
-        .nav-link { position: relative; text-decoration: none; color: #0A0A0A; font-family: ${mono}; font-size: 13px; letter-spacing: 0.06em; padding: 4px 0; }
-        .nav-link::after { content: ''; position: absolute; bottom: -2px; left: 0; width: 0; height: 2px; background: #0077B6; transition: width 0.3s ease; }
-        .nav-link:hover::after { width: 100%; }
-
-        .press-name { font-family: ${mono}; font-size: 11px; letter-spacing: 0.14em; color: #9CA3AF; text-transform: uppercase; }
-
-        @media (max-width: 768px) {
-          .desktop-nav { display: none !important; }
-          .mobile-toggle { display: block !important; }
-          .stat-grid { grid-template-columns: repeat(3, 1fr) !important; gap: 24px !important; }
-          .hero-name { font-size: 48px !important; }
-        }
-        @media (min-width: 769px) {
-          .mobile-toggle { display: none !important; }
-          .desktop-nav { display: flex !important; }
-        }
-      `}</style>
-
-      <CustomCursor />
-
-      {/* NAV */}
-      <nav style={{
-        position: "fixed", top: 0, left: 0, right: 0, zIndex: 1000,
-        background: scrolled ? "rgba(255,255,255,0.95)" : "transparent",
-        backdropFilter: scrolled ? "blur(8px)" : "none",
-        transition: "all 0.3s ease",
-        padding: "14px clamp(20px, 5vw, 64px)",
-        display: "flex", justifyContent: "space-between", alignItems: "center",
-      }}>
-        <div
-          role="button"
-          onClick={() => scrollTo("hero")}
-          style={{ fontFamily: mono, fontSize: "13px", fontWeight: 700, letterSpacing: "0.16em", textTransform: "uppercase", color: scrolled ? "#0A0A0A" : "#fff" }}
-        >
-          VICTORIA CAVAZOS
-        </div>
-        <div className="desktop-nav" style={{ gap: 28, alignItems: "center" }}>
-          {[["about", "about"], ["experience", "experience"], ["writing", "writing"], ["world", "around the world"], ["contact", "say hi"]].map(([id, label]) => (
-            <span key={id} className="nav-link" role="button" onClick={() => scrollTo(id)} style={{ color: scrolled ? "#0A0A0A" : "#fff" }}>{label}</span>
-          ))}
-        </div>
-        <div className="mobile-toggle" role="button" onClick={() => setMenuOpen(!menuOpen)} style={{ fontFamily: mono, fontSize: "20px", color: scrolled ? "#0A0A0A" : "#fff" }}>≡</div>
-      </nav>
-
-      {/* MOBILE MENU */}
-      {menuOpen && (
-        <div style={{
-          position: "fixed", inset: 0, zIndex: 9999, background: "#0A0A0A",
-          display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", gap: 32,
-        }}>
-          <div role="button" onClick={() => setMenuOpen(false)} style={{ position: "absolute", top: 16, right: 24, fontFamily: mono, fontSize: "24px", color: "#fff" }}>✕</div>
-          {[["about", "About"], ["experience", "Experience"], ["writing", "Writing"], ["world", "Around the World"], ["contact", "Say Hi"]].map(([id, label]) => (
-            <span key={id} role="button" onClick={() => scrollTo(id)} style={{ fontFamily: serif, fontSize: "36px", color: "#fff", textDecoration: "none" }}>{label}</span>
-          ))}
-        </div>
-      )}
-
-      {/* HERO */}
-      <section id="hero" style={{
-        minHeight: "100vh", position: "relative", display: "flex", flexDirection: "column",
-        justifyContent: "center", alignItems: "center", textAlign: "center",
-        background: "linear-gradient(to bottom, rgba(10,10,10,0.78), rgba(10,10,10,0.85)), url('/images/hero-lcs19.jpeg') center/cover",
-        padding: "0 24px",
-      }}>
-        <div style={{ animation: "fadeInUp 1s ease" }}>
-          <h1 className="hero-name" style={{
-            fontFamily: serif, fontSize: "clamp(56px, 12vw, 140px)", lineHeight: 0.92,
-            color: "#fff", fontWeight: 400, marginBottom: 24,
-          }}>
-            Victoria<br />Cavazos
-          </h1>
-          <div style={{ fontFamily: mono, fontSize: "clamp(11px, 1.4vw, 14px)", letterSpacing: "0.18em", color: "rgba(255,255,255,0.5)", textTransform: "lowercase" }}>
-            navy officer · writer · operator · airbnb host
-          </div>
-        </div>
-        <div style={{ position: "absolute", bottom: 32, animation: "scrollBounce 2s ease infinite" }}>
-          <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M10 4L10 16M10 16L5 11M10 16L15 11" stroke="rgba(255,255,255,0.3)" strokeWidth="1.5" /></svg>
-        </div>
-      </section>
-
-      {/* INTRO */}
-      <section style={{ padding: "clamp(64px, 10vw, 120px) clamp(24px, 8vw, 200px)", maxWidth: 860, margin: "0 auto" }}>
-        <FadeIn>
-          <p style={{ fontFamily: serif, fontSize: "clamp(20px, 2.8vw, 28px)", lineHeight: 1.6, color: "#0A0A0A", fontStyle: "italic" }}>
-            I spent eight years in the Navy running weapons programs, leading engineering teams, and writing the New Year's poem for my ship. I've been to ten countries on three continents, published in Proceedings and Business Insider, and managed a $500M warship's ordnance accountability — I improved it by 30%. Now I'm transitioning to tech, because operational rigor shouldn't stop at the quarterdeck.
-          </p>
-        </FadeIn>
-        <FadeIn delay={0.2}>
-          <div style={{ display: "flex", justifyContent: "center", gap: "clamp(16px, 3vw, 40px)", flexWrap: "wrap", marginTop: 48 }}>
-            {["BUSINESS INSIDER", "U.S. NAVAL INSTITUTE PROCEEDINGS", "THE BROWNSVILLE HERALD"].map((name) => (
-              <span key={name} className="press-name">{name}</span>
-            ))}
-          </div>
-        </FadeIn>
-      </section>
-
-      {/* ABOUT */}
-      <section id="about" style={{ background: "#F5F0E8", padding: "clamp(64px, 10vw, 120px) clamp(24px, 8vw, 120px)" }}>
-        <div style={{ maxWidth: 900, margin: "0 auto" }}>
-          <FadeIn>
-            <h2 style={{ fontFamily: serif, fontSize: "clamp(36px, 6vw, 64px)", marginBottom: 48, lineHeight: 1 }}>About</h2>
-          </FadeIn>
-
-          <div style={{ display: "flex", gap: 48, flexWrap: "wrap", alignItems: "flex-start" }}>
-            <FadeIn>
-              <div style={{ flex: "0 0 auto", width: "clamp(200px, 30vw, 300px)" }}>
-                <img
-                  src="https://raw.githubusercontent.com/victoriacavazos45-alt/personal/main/HFAKM8ha0AAegVk.jpeg"
-                  alt="Victoria Cavazos"
-                  style={{
-                    width: "100%", aspectRatio: "3/4", objectFit: "cover",
-                    transform: "rotate(-2deg)", border: "3px solid #0A0A0A",
-                    display: "block",
-                  }}
-                />
-              </div>
-            </FadeIn>
-
-            <FadeIn delay={0.15}>
-              <div style={{ flex: 1, minWidth: 280 }}>
-                <p style={{ fontFamily: sans, fontSize: "16px", lineHeight: 1.8, color: "#4B5563", marginBottom: 20 }}>
-                  Eight years as a Surface Warfare Officer. Four deployments — one to the Black Sea aboard USS Ross out of Rota, Spain, and three in the Caribbean and South America on USS Wichita and USS St. Louis. I've walked the streets of Valparaíso, stood watch in the Eastern Mediterranean, and coordinated with Chilean and Peruvian navies in Spanish during UNITAS 2025.
-                </p>
-                <p style={{ fontFamily: sans, fontSize: "16px", lineHeight: 1.8, color: "#4B5563", marginBottom: 20 }}>
-                  I have a B.A. in Spanish from St. Edward's University in Austin. I've written for Proceedings, Business Insider, and the Brownsville Herald. I run a 5-star Airbnb in Jacksonville Beach. I'm currently the Mission Liaison Officer at Littoral Combat Ship Squadron TWO in Mayport, and I'm transitioning out in June 2026.
-                </p>
-                <p style={{ fontFamily: sans, fontSize: "16px", lineHeight: 1.8, color: "#4B5563" }}>
-                  I'm looking for what's next — in planning, business operations, or tech/media. I bring operational rigor, a global perspective, and the ability to write a sentence that people actually want to read.
-                </p>
-              </div>
-            </FadeIn>
-          </div>
-
-          <FadeIn delay={0.3}>
-            <div className="stat-grid" style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 32, marginTop: 64, textAlign: "center" }}>
-              <Stat number="8" label="Years Active Duty" />
-              <Stat number="4" label="Deployments" />
-              <Stat number="10+" label="Countries" />
-              <Stat number="3" label="Continents" />
-              <Stat number="30%" label="Accountability Improvement" />
-            </div>
-          </FadeIn>
-
-          <FadeIn delay={0.4}>
-            <div style={{ marginTop: 56, fontFamily: mono, fontSize: "12px", color: "#9CA3AF", letterSpacing: "0.04em", lineHeight: 2 }}>
-              B.A. Spanish — St. Edward's University, Austin TX, 2018<br />
-              NHHC Deck Log Poetry Contest — 3rd Place, 2025<br />
-              USNI D&I Essay Contest — 2nd Prize, 2022<br />
-              TIPA In-Depth Reporting — 3rd Prize<br />
-              Headliners Foundation Stuart Long Scholarship
-            </div>
-          </FadeIn>
-        </div>
-      </section>
-
-      {/* EXPERIENCE */}
-      <section id="experience" style={{ padding: "clamp(64px, 10vw, 120px) clamp(24px, 8vw, 120px)" }}>
-        <div style={{ maxWidth: 800, margin: "0 auto" }}>
-          <FadeIn>
-            <h2 style={{ fontFamily: serif, fontSize: "clamp(36px, 6vw, 64px)", marginBottom: 64, lineHeight: 1 }}>Experience</h2>
-          </FadeIn>
-
-          <ExperienceEntry title="Mission Liaison Officer" org="Cdr, Littoral Combat Ship Squadron TWO" dates="Oct 2025 – Present" location="Jacksonville, FL">
-            Strategic coordination between LCS operational units and squadron headquarters. Owns planning cycles, readiness reporting, and cross-command alignment. Builds program plans with clear milestones and develops executive briefings that connect performance data to strategic outcomes.
-          </ExperienceEntry>
-
-          <ExperienceEntry title="Weapons Officer & Anti-Terrorism Officer" org="USS St. Louis (LCS-19)" dates="Jun 2024 – Oct 2025" location="Jacksonville, FL → Caribbean, South America" countries="Chile · Peru · Ecuador · Cuba · Curaçao" metric="30%">
-            End-to-end program delivery for weapons systems and force protection on a $500M vessel, across 70+ personnel. Inherited a broken ammunition accountability program, redesigned it from scratch, and delivered a 30% improvement to full compliance. Participated in UNITAS 2025. Won 3rd Place in the NHHC Deck Log Poetry Contest.
-          </ExperienceEntry>
-
-          <ExperienceEntry title="Assistant Chief Engineer" org="USS Wichita (LCS-13)" dates="Mar 2022 – Jan 2024" location="Jacksonville, FL → Caribbean, South America">
-            Ran business operations for a 20-person engineering department on a $500M vessel. Managed 10+ complex maintenance availabilities end-to-end. Built KPI dashboards and operational reporting that translated raw data into leadership-ready insights.
-          </ExperienceEntry>
-
-          <ExperienceEntry title="Staff Officer, N6" org="Cdr, Naval Surface Squadron 14" dates="Jun 2020 – Mar 2022" location="Jacksonville, FL · 12 warships">
-            Central planning and ops coordinator for cyber, comms, and IT across twelve warships. Built governance frameworks, OKR-aligned tracking systems, and executive reporting tools connecting command performance to squadron priorities.
-          </ExperienceEntry>
-
-          <ExperienceEntry title="Strike & Ordnance Officer" org="USS Ross (DDG-71)" dates="Aug 2019 – Jun 2020" location="Rota, Spain → Black Sea, Eastern Med" countries="Spain · Greece · Italy · Romania · Ukraine">
-            Forward-deployed to Rota. Managed ordnance accountability and strike planning during Black Sea patrols in a contested, high-readiness environment. Coordinated with NATO allies across Southern and Eastern Europe.
-          </ExperienceEntry>
-
-          <FadeIn>
-            <div style={{ borderTop: "1px solid #E5E7EB", paddingTop: 48, marginTop: 16 }}>
-              <div style={{ fontFamily: mono, fontSize: "12px", color: "#9CA3AF", lineHeight: 2.2, letterSpacing: "0.04em" }}>
-                <strong style={{ color: "#0A0A0A" }}>Airbnb Co-Host</strong> · Dec 2023 – Present · Jacksonville Beach, FL<br />
-                ~45 stays/year · consistent 5-star reviews · guest experience & pricing optimization<br /><br />
-                <strong style={{ color: "#0A0A0A" }}>Freelance Writer</strong> · May 2018 – Present<br />
-                Business Insider · Proceedings (USNI) · The Brownsville Herald<br /><br />
-                <strong style={{ color: "#0A0A0A" }}>News Editor</strong> · Hilltop Views, St. Edward's University · 2015–2018 · Austin, TX<br />
-                Award-winning student paper · 50+ articles/year · TIPA 3rd Prize, In-Depth Reporting
-              </div>
-            </div>
-          </FadeIn>
-        </div>
-      </section>
-
-      {/* WRITING */}
-      <section id="writing" style={{ background: "#F5F0E8", padding: "clamp(64px, 10vw, 120px) clamp(24px, 8vw, 120px)" }}>
-        <div style={{ maxWidth: 720, margin: "0 auto" }}>
-          <FadeIn>
-            <h2 style={{ fontFamily: serif, fontSize: "clamp(36px, 6vw, 64px)", marginBottom: 16, lineHeight: 1 }}>Writing</h2>
-          </FadeIn>
-          <FadeIn delay={0.1}>
-            <div style={{ display: "flex", gap: "clamp(16px, 3vw, 40px)", flexWrap: "wrap", marginBottom: 56 }}>
-              {["BUSINESS INSIDER", "PROCEEDINGS", "THE BROWNSVILLE HERALD"].map((n) => (
-                <span key={n} className="press-name">{n}</span>
-              ))}
-            </div>
-          </FadeIn>
-
-          <WritingEntry
-            title="Warrior Toughness Requires Emotional Strength"
-            pub="U.S. Naval Institute Proceedings"
-            date="July 2022"
-            summary="The Navy's Warrior Toughness program — mindfulness, conscious breathing, meditation — is an intentional, actionable skill for high-stress decision-making, not the passive exercise skeptics assume."
-            url="https://www.usni.org/magazines/proceedings/2022/july/warrior-toughness-requires-emotional-strength"
-          />
-          <WritingEntry
-            title="Mothers Deserve Better from the Navy"
-            pub="U.S. Naval Institute Proceedings"
-            date="August 2022"
-            award="Diversity & Inclusion Essay Contest — 2nd Prize"
-            summary="The marginalization of motherhood in the Sea Services is draining top talent. Career flexibility and better support for new mothers isn't a perk — it's a retention strategy."
-            url="https://www.usni.org/magazines/proceedings/2022/august/mothers-deserve-better-navy"
-          />
-          <WritingEntry
-            title="2025 New Year's Deck Log Entry"
-            pub="Naval History & Heritage Command"
-            date="January 2025"
-            award="NHHC Deck Log Contest — 3rd Place"
-            summary="Continued a Navy tradition dating to 1926. Selected by NHHC Director Samuel Cox. USS St. Louis (LCS-19)."
-            url="https://www.history.navy.mil/research/archives/resources-for-the-fleet/deck-logs/new-years-contest/2025.html"
-          />
-        </div>
-      </section>
-
-      {/* AROUND THE WORLD */}
-      <section id="world" style={{ padding: "clamp(64px, 10vw, 120px) clamp(24px, 8vw, 120px)" }}>
-        <div style={{ maxWidth: 800, margin: "0 auto" }}>
-          <FadeIn>
-            <h2 style={{ fontFamily: serif, fontSize: "clamp(36px, 6vw, 64px)", marginBottom: 48, lineHeight: 1 }}>Around the World</h2>
-          </FadeIn>
-
-          <FadeIn delay={0.1}>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 32, marginBottom: 56 }}>
-              {[
-                { region: "Europe", places: [
-                  { name: "Spain", note: "Homeport — USS Ross, Rota" },
-                  { name: "Greece", note: "Operational patrol" },
-                  { name: "Italy", note: "Operational patrol" },
-                  { name: "Romania", note: "Black Sea deployment" },
-                  { name: "Ukraine", note: "Black Sea deployment" },
-                ]},
-                { region: "South America", places: [
-                  { name: "Chile", note: "UNITAS 2025" },
-                  { name: "Peru", note: "UNITAS 2025" },
-                  { name: "Ecuador", note: "UNITAS 2025" },
-                ]},
-                { region: "Caribbean & US", places: [
-                  { name: "Cuba", note: "Operational deployment" },
-                  { name: "Curaçao", note: "Operational deployment" },
-                  { name: "New York City", note: "USS Cooperstown Commissioning" },
-                ]},
-              ].map((group) => (
-                <div key={group.region}>
-                  <div style={{ fontFamily: mono, fontSize: "11px", letterSpacing: "0.14em", textTransform: "uppercase", color: "#9CA3AF", marginBottom: 12 }}>{group.region}</div>
-                  {group.places.map((p) => (
-                    <div key={p.name} style={{ marginBottom: 10 }}>
-                      <div style={{ fontFamily: serif, fontSize: "20px", color: "#0A0A0A" }}>{p.name}</div>
-                      <div style={{ fontFamily: mono, fontSize: "11px", color: "#9CA3AF", letterSpacing: "0.04em" }}>{p.note}</div>
-                    </div>
-                  ))}
-                </div>
-              ))}
-            </div>
-          </FadeIn>
-
-          <FadeIn delay={0.2}>
-            <div style={{ textAlign: "center", fontFamily: serif, fontSize: "clamp(24px, 4vw, 40px)", fontStyle: "italic", color: "#0A0A0A", lineHeight: 1.3, padding: "32px 0" }}>
-              10 countries. 3 continents. 4 deployments.
-            </div>
-          </FadeIn>
-        </div>
-      </section>
-
-      {/* SAY HI */}
-      <section id="contact" style={{ background: "#0A0A0A", color: "#fff", padding: "clamp(80px, 12vw, 160px) clamp(24px, 8vw, 120px)", textAlign: "center" }}>
-        <FadeIn>
-          <h2 style={{ fontFamily: serif, fontSize: "clamp(36px, 6vw, 64px)", marginBottom: 20, lineHeight: 1 }}>Say Hi</h2>
-        </FadeIn>
-        <FadeIn delay={0.1}>
-          <p style={{ fontFamily: sans, fontSize: "16px", color: "rgba(255,255,255,0.6)", marginBottom: 40, maxWidth: 480, margin: "0 auto 40px" }}>
-            I'm leaving the Navy in June 2026. Let's talk about what's next.
-          </p>
-        </FadeIn>
-        <FadeIn delay={0.2}>
-          <div style={{ fontFamily: mono, fontSize: "14px", letterSpacing: "0.06em", lineHeight: 2.4 }}>
-            <a href="mailto:victoriacavazos45@gmail.com" style={{ color: "#0077B6", textDecoration: "none" }}>victoriacavazos45@gmail.com</a><br />
-            <a href="https://linkedin.com/in/victoria-nicole-cavazos" target="_blank" rel="noopener noreferrer" style={{ color: "rgba(255,255,255,0.6)", textDecoration: "none" }}>linkedin.com/in/victoria-nicole-cavazos</a><br />
-            <span style={{ color: "rgba(255,255,255,0.35)" }}>Jacksonville, FL</span>
-          </div>
-        </FadeIn>
-      </section>
-
-      {/* FOOTER */}
-      <footer style={{ background: "#0A0A0A", borderTop: "1px solid rgba(255,255,255,0.08)", padding: "24px", textAlign: "center" }}>
-        <div style={{ fontFamily: mono, fontSize: "11px", color: "rgba(255,255,255,0.25)", letterSpacing: "0.08em" }}>
-          © 2026 Victoria Cavazos
-        </div>
-      </footer>
-    </div>
-  );
-}
+    window.scrollTo({ top, behavior: 'smooth' });
+  }
+ 
+  // Mobile menu
+  function toggleMenu() {
+    document.getElementById('mobile-menu').classList.toggle('open');
+  }
+ 
+  // Nav background on scroll
+  window.addEventListener('scroll', () => {
+    document.getElementById('main-nav').classList.toggle('scrolled', window.scrollY > 60);
+  });
+ 
+  // Fade-in on scroll
+  const fadeEls = document.querySelectorAll('.fade-in');
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) entry.target.classList.add('visible');
+    });
+  }, { threshold: 0.12 });
+  fadeEls.forEach(el => observer.observe(el));
+</script>
+</body>
+</html>
