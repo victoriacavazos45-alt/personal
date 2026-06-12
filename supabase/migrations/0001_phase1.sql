@@ -91,28 +91,38 @@ as $$
     and created_at > now() - interval '1 minute';
 $$;
 
+drop policy if exists "own sessions select" on public.quiz_sessions;
 create policy "own sessions select" on public.quiz_sessions
   for select using (auth.uid() = user_id);
+drop policy if exists "own sessions insert" on public.quiz_sessions;
 create policy "own sessions insert" on public.quiz_sessions
   for insert with check (auth.uid() = user_id and public.under_session_rate_limit());
 
+drop policy if exists "own attempts select" on public.quiz_attempts;
 create policy "own attempts select" on public.quiz_attempts
   for select using (auth.uid() = user_id);
+drop policy if exists "own attempts insert" on public.quiz_attempts;
 create policy "own attempts insert" on public.quiz_attempts
   for insert with check (auth.uid() = user_id);
 
+drop policy if exists "own qstats select" on public.question_stats;
 create policy "own qstats select" on public.question_stats
   for select using (auth.uid() = user_id);
+drop policy if exists "own cstats select" on public.category_stats;
 create policy "own cstats select" on public.category_stats
   for select using (auth.uid() = user_id);
 
+drop policy if exists "own bookmarks all" on public.bookmarks;
 create policy "own bookmarks all" on public.bookmarks
   for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
+drop policy if exists "own user_stats select" on public.user_stats;
 create policy "own user_stats select" on public.user_stats
   for select using (auth.uid() = user_id);
+drop policy if exists "own user_stats insert" on public.user_stats;
 create policy "own user_stats insert" on public.user_stats
   for insert with check (auth.uid() = user_id);
+drop policy if exists "own user_stats update" on public.user_stats;
 create policy "own user_stats update" on public.user_stats
   for update using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
