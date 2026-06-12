@@ -34,7 +34,12 @@ React + Tailwind CSS (no component libraries), Supabase auth + database.
 
 Fill-in-the-blank answers in Board Mode are matched after normalization (case, punctuation, whitespace) against an explicit list of accepted variants per item (`src/data/boardItems.js`).
 
-Phase 3 (Lights Lab) is not started — pending confirmation.
+**Phase 3 — Lights Lab (2D): complete.**
+
+- Starboard-profile vessel viewer with day/night toggle: 9 vessels across Navy (DDG, LCS, CVN), merchant, fishing, recreational, and towing categories (`src/data/vessels.js`).
+- Night mode shows the COLREGs-accurate light configuration (relative positions verified in tests: after masthead higher and abaft of forward, towing light above sternlight, green-over-white trawling, red-over-white fishing). Day mode shows the silhouette plus prescribed day shapes (towing diamonds).
+- Every light is tappable: rule reference, visibility arc, explanation, and a link into the Rules Index reader. Carrier lights are presented as a Rule 1(e) closest-possible-compliance arrangement.
+- The 3D extension (360° rotation, Jane's-based models) is **not started** — gated on founder confirmation and Jane's data licensing per the PRD.
 
 ## Running locally
 
