@@ -61,6 +61,7 @@ function SignedInApp({ user, localMode }) {
 
   const [data, setData] = useState({
     loading: true,
+    loadError: null,
     bookmarks: new Set(),
     questionStats: {},
     categoryStats: {},
@@ -69,18 +70,39 @@ function SignedInApp({ user, localMode }) {
     mnemonicFavorites: new Set(),
   })
 
+  // Never let a failed load strand the user on the spinner: surface the
+  // error with a retry instead.
   const refresh = useCallback(async () => {
-    const [bookmarks, questionStats, categoryStats, userStats, annotations, mnemonicFavorites] =
-      await Promise.all([
-        store.getBookmarks(),
-        store.getQuestionStats(),
-        store.getCategoryStats(),
-        store.getUserStats(),
-        store.getAnnotations(),
-        store.getMnemonicFavorites(),
-      ])
-    setData({ loading: false, bookmarks, questionStats, categoryStats, userStats, annotations, mnemonicFavorites })
+    try {
+      const [bookmarks, questionStats, categoryStats, userStats, annotations, mnemonicFavorites] =
+        await Promise.all([
+          store.getBookmarks(),
+          store.getQuestionStats(),
+          store.getCategoryStats(),
+          store.getUserStats(),
+          store.getAnnotations(),
+          store.getMnemonicFavorites(),
+        ])
+      setData({
+        loading: false,
+        loadError: null,
+        bookmarks,
+        questionStats,
+        categoryStats,
+        userStats,
+        annotations,
+        mnemonicFavorites,
+      })
+    } catch (err) {
+      console.error('SeaSmart data load failed:', err)
+      setData((d) => ({ ...d, loading: false, loadError: err?.message || 'Could not load your data.' }))
+    }
   }, [store])
+
+  const retry = useCallback(() => {
+    setData((d) => ({ ...d, loading: true, loadError: null }))
+    refresh()
+  }, [refresh])
 
   useEffect(() => {
     store
@@ -202,6 +224,35 @@ function SignedInApp({ user, localMode }) {
         <div className="min-h-dvh flex flex-col items-center justify-center gap-4">
           <Wordmark />
           <Spinner />
+        </div>
+      ) : data.loadError ? (
+        <div className="min-h-dvh flex flex-col items-center justify-center px-6">
+          <div className="max-w-md w-full">
+            <Wordmark />
+            <h1 className="font-serif text-2xl text-navy mt-6">Couldn't load your data</h1>
+            <p className="font-sans text-[13px] text-wrong-text border border-wrong-border bg-wrong-bg px-4 py-3 mt-4 break-words">
+              {data.loadError}
+            </p>
+            <p className="font-sans text-[13px] text-navy-mist leading-relaxed mt-4">
+              Your account is fine — the app just couldn't reach its tables. If this is a newly connected
+              Supabase project, make sure both SQL migrations in <code className="px-1 bg-cream-dark">supabase/migrations</code> have
+              been run. Then retry.
+            </p>
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={retry}
+                className="flex-1 bg-navy text-cream font-sans text-sm font-medium px-5 py-3 hover:bg-navy-deep"
+              >
+                Retry
+              </button>
+              <button
+                onClick={signOut}
+                className="border border-navy text-navy font-sans text-sm font-medium px-5 py-3 hover:bg-navy hover:text-cream"
+              >
+                Sign out
+              </button>
+            </div>
+          </div>
         </div>
       ) : (
         screen
