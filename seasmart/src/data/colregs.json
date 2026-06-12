@@ -1,0 +1,76 @@
+{
+  "version": 1,
+  "note": "PLACEHOLDER DATA. Replace this file's contents with the official rule text pasted from the USCG Navigation Center website. Keep the structure exactly as shown; see colregs-template.json for the full skeleton and instructions. Rule ids and paragraph ids must stay stable once users start annotating.",
+  "parts": [
+    {
+      "id": "part-b",
+      "label": "Part B — Steering and Sailing Rules",
+      "rules": [
+        {
+          "id": "rule-5",
+          "num": "5",
+          "title": "Look-out",
+          "paragraphs": [
+            {
+              "id": "r5-1",
+              "text": "[Placeholder] Paste the official text of Rule 5 here, replacing this paragraph. This sample sentence exists so you can try highlighting: press and drag (or click and drag) across any words in this paragraph, then tap Highlight to save it. Tap a saved highlight to add a margin note or remove it."
+            },
+            {
+              "id": "r5-2",
+              "text": "[Placeholder] A second sample paragraph. Each lettered subparagraph of a rule should become its own entry in the paragraphs array so highlights and notes anchor to a stable paragraph id."
+            }
+          ]
+        },
+        {
+          "id": "rule-13",
+          "num": "13",
+          "title": "Overtaking",
+          "paragraphs": [
+            {
+              "id": "r13-1",
+              "text": "[Placeholder] Paste the official text of Rule 13 paragraph (a) here. The search box on the Rules Index screen searches every paragraph in this file, so once the real text is in, full-text search works across the entire publication."
+            },
+            {
+              "id": "r13-2",
+              "text": "[Placeholder] Paste paragraph (b) here. Quiz questions that cite this rule are linked automatically at the bottom of the reader — try the Drill these questions button below."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "part-c",
+      "label": "Part C — Lights and Shapes",
+      "rules": [
+        {
+          "id": "rule-23",
+          "num": "23",
+          "title": "Power-driven Vessels Underway",
+          "paragraphs": [
+            {
+              "id": "r23-1",
+              "text": "[Placeholder] Paste the official text of Rule 23 here. This third sample rule exists so the part navigation, search, and related-question linking can be exercised before the full text is loaded."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "annexes",
+      "label": "Annexes",
+      "rules": [
+        {
+          "id": "annex-4",
+          "num": "Annex IV",
+          "title": "Distress Signals",
+          "paragraphs": [
+            {
+              "id": "a4-1",
+              "text": "[Placeholder] Paste the official text of Annex IV here. Annex entries work exactly like rules: they are searchable, annotatable, and linked to the quiz questions that cite them."
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

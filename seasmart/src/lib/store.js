@@ -78,6 +78,64 @@ class SupabaseStore {
     await this.#bumpStreak()
   }
 
+  async getAnnotations() {
+    const { data, error } = await supabase
+      .from('annotations')
+      .select('id, rule_id, paragraph_id, start_offset, end_offset, selected_text, note')
+      .order('created_at', { ascending: true })
+    if (error) throw error
+    return data
+  }
+
+  async addAnnotation(a) {
+    const { data, error } = await supabase
+      .from('annotations')
+      .insert({
+        user_id: this.userId,
+        rule_id: a.rule_id,
+        paragraph_id: a.paragraph_id,
+        start_offset: a.start_offset,
+        end_offset: a.end_offset,
+        selected_text: a.selected_text,
+        note: a.note ?? null,
+      })
+      .select('id, rule_id, paragraph_id, start_offset, end_offset, selected_text, note')
+      .single()
+    if (error) throw error
+    return data
+  }
+
+  async updateAnnotation(id, note) {
+    const { error } = await supabase
+      .from('annotations')
+      .update({ note: note || null, updated_at: new Date().toISOString() })
+      .eq('id', id)
+    if (error) throw error
+  }
+
+  async deleteAnnotation(id) {
+    const { error } = await supabase.from('annotations').delete().eq('id', id)
+    if (error) throw error
+  }
+
+  async getMnemonicFavorites() {
+    const { data, error } = await supabase.from('mnemonic_favorites').select('mnemonic_id')
+    if (error) throw error
+    return new Set(data.map((r) => r.mnemonic_id))
+  }
+
+  async toggleMnemonicFavorite(mnemonicId, on) {
+    if (on) {
+      const { error } = await supabase
+        .from('mnemonic_favorites')
+        .upsert({ user_id: this.userId, mnemonic_id: mnemonicId }, { onConflict: 'user_id,mnemonic_id' })
+      if (error) throw error
+    } else {
+      const { error } = await supabase.from('mnemonic_favorites').delete().eq('mnemonic_id', mnemonicId)
+      if (error) throw error
+    }
+  }
+
   async completeSession(session) {
     const now = Date.now()
     if (now - this.lastSubmit < MIN_MS_BETWEEN_SUBMITS) {
@@ -94,6 +152,7 @@ class SupabaseStore {
       completed_at: session.completedAt,
       question_count: session.total,
       correct_count: session.correct,
+      duration_seconds: session.durationSeconds ?? null,
     })
     if (sErr) throw sErr
 
@@ -121,12 +180,23 @@ class SupabaseStore {
 
     const stats = await this.#bumpStreak()
     const scorePct = Math.round((session.correct / session.total) * 100)
+    const updates = {}
     if (scorePct > (stats?.best_score_pct ?? -1)) {
-      await supabase
-        .from('user_stats')
-        .update({ best_score_pct: scorePct, best_score_date: todayKey() })
-        .eq('user_id', this.userId)
-      stats.best_score_pct = scorePct
+      updates.best_score_pct = scorePct
+      updates.best_score_date = todayKey()
+    }
+    // Fastest Board Mode completion counts only on a qualifying run (>= 80%).
+    if (
+      session.mode === 'board' &&
+      session.durationSeconds &&
+      scorePct >= 80 &&
+      (stats?.best_board_seconds == null || session.durationSeconds < stats.best_board_seconds)
+    ) {
+      updates.best_board_seconds = session.durationSeconds
+    }
+    if (Object.keys(updates).length > 0) {
+      await supabase.from('user_stats').update(updates).eq('user_id', this.userId)
+      Object.assign(stats, updates)
     }
 
     this.#sendAnonymousAggregates(session)
@@ -203,6 +273,8 @@ class LocalStore {
       bookmarks: [],
       sessions: [],
       userStats: null,
+      annotations: [],
+      mnemonicFavorites: [],
       ...loadLocal(),
     }
     this.lastSubmit = 0
@@ -247,6 +319,50 @@ class LocalStore {
     return this.db.userStats
   }
 
+  async getAnnotations() {
+    return [...this.db.annotations]
+  }
+
+  async addAnnotation(a) {
+    const row = {
+      id: `ann-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      rule_id: a.rule_id,
+      paragraph_id: a.paragraph_id,
+      start_offset: a.start_offset,
+      end_offset: a.end_offset,
+      selected_text: a.selected_text,
+      note: a.note ?? null,
+    }
+    this.db.annotations.push(row)
+    this.#persist()
+    return row
+  }
+
+  async updateAnnotation(id, note) {
+    const row = this.db.annotations.find((x) => x.id === id)
+    if (row) {
+      row.note = note || null
+      this.#persist()
+    }
+  }
+
+  async deleteAnnotation(id) {
+    this.db.annotations = this.db.annotations.filter((x) => x.id !== id)
+    this.#persist()
+  }
+
+  async getMnemonicFavorites() {
+    return new Set(this.db.mnemonicFavorites)
+  }
+
+  async toggleMnemonicFavorite(mnemonicId, on) {
+    const set = new Set(this.db.mnemonicFavorites)
+    if (on) set.add(mnemonicId)
+    else set.delete(mnemonicId)
+    this.db.mnemonicFavorites = [...set]
+    this.#persist()
+  }
+
   async completeSession(session) {
     const now = Date.now()
     if (now - this.lastSubmit < MIN_MS_BETWEEN_SUBMITS) {
@@ -261,6 +377,7 @@ class LocalStore {
       completed_at: session.completedAt,
       question_count: session.total,
       correct_count: session.correct,
+      duration_seconds: session.durationSeconds ?? null,
     })
     for (const a of session.attempts) {
       const q = this.db.questionStats[a.questionId] ?? { attempts: 0, misses: 0 }
@@ -275,6 +392,8 @@ class LocalStore {
     }
     const streak = advanceStreak(this.db.userStats)
     const scorePct = Math.round((session.correct / session.total) * 100)
+    const prevBoard = this.db.userStats?.best_board_seconds ?? null
+    const qualifies = session.mode === 'board' && session.durationSeconds && scorePct >= 80
     this.db.userStats = {
       ...this.db.userStats,
       ...streak,
@@ -283,6 +402,10 @@ class LocalStore {
         scorePct > (this.db.userStats?.best_score_pct ?? -1)
           ? todayKey()
           : this.db.userStats?.best_score_date ?? null,
+      best_board_seconds:
+        qualifies && (prevBoard == null || session.durationSeconds < prevBoard)
+          ? session.durationSeconds
+          : prevBoard,
     }
     this.#persist()
     return this.db.userStats
