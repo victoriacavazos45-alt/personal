@@ -1,0 +1,72 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    -webkit-tap-highlight-color: transparent;
+  }
+  body {
+    @apply bg-cream text-ink font-sans antialiased;
+  }
+  ::selection {
+    background: #1b3a5c;
+    color: #f5f0e8;
+  }
+}
+
+@layer components {
+  /* Yellow CSS highlight for critical words in rule text — highlight, not bold */
+  mark.crit {
+    background: linear-gradient(to bottom, transparent 8%, #f7e9a0 8%, #f7e9a0 92%, transparent 92%);
+    color: inherit;
+    font-weight: inherit;
+    padding: 0 1px;
+  }
+
+  .hairline {
+    @apply border-t border-beige-dark;
+  }
+}
+
+/* Custom range slider, navy on beige */
+input[type='range'].ss-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 4px;
+  border-radius: 9999px;
+  background: #d5c9b2;
+  outline: none;
+}
+input[type='range'].ss-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 26px;
+  height: 26px;
+  border-radius: 9999px;
+  background: #1b3a5c;
+  border: 3px solid #f5f0e8;
+  box-shadow: 0 1px 4px rgba(18, 42, 69, 0.35);
+  cursor: pointer;
+}
+input[type='range'].ss-slider::-moz-range-thumb {
+  width: 26px;
+  height: 26px;
+  border-radius: 9999px;
+  background: #1b3a5c;
+  border: 3px solid #f5f0e8;
+  box-shadow: 0 1px 4px rgba(18, 42, 69, 0.35);
+  cursor: pointer;
+}
+
+/* Reduced motion: respect user preference */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
