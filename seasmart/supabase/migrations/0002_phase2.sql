@@ -28,6 +28,7 @@ create index if not exists annotations_user_rule_idx
 
 alter table public.annotations enable row level security;
 
+drop policy if exists "own annotations all" on public.annotations;
 create policy "own annotations all" on public.annotations
   for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
@@ -41,5 +42,6 @@ create table if not exists public.mnemonic_favorites (
 
 alter table public.mnemonic_favorites enable row level security;
 
+drop policy if exists "own mnemonic favorites all" on public.mnemonic_favorites;
 create policy "own mnemonic favorites all" on public.mnemonic_favorites
   for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
