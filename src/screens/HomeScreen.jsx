@@ -38,6 +38,21 @@ export default function HomeScreen() {
       icon: <BookmarkIcon className="w-4 h-4 text-gold" filled={bookmarks.size > 0} />,
     },
     {
+      title: 'Board Mode',
+      desc: 'Timed, mixed-format qual-board simulation. No hints.',
+      action: () => navigate('/board'),
+    },
+    {
+      title: 'Rules Index',
+      desc: 'The full publication — searchable, highlightable, annotated in the margins.',
+      action: () => navigate('/rules'),
+    },
+    {
+      title: 'Mnemonic Library',
+      desc: 'The sayings the fleet actually remembers, organized by rule.',
+      action: () => navigate('/mnemonics'),
+    },
+    {
       title: 'Progress',
       desc: 'Score trends and your strongest and weakest categories.',
       action: () => navigate('/dashboard'),

@@ -18,13 +18,35 @@ export default function ResultsScreen({ summary }) {
   if (!summary) return null
 
   const { total, correct, pct, lastPct, weakestCategory, missedIds } = summary
+  const isBoard = summary.mode === 'board'
   const delta = lastPct != null ? pct - lastPct : null
   const isPersonalBest = pct >= (userStats?.best_score_pct ?? 0) && pct === userStats?.best_score_pct
   const streak = liveStreak(userStats)
 
   // One suggested next action, in priority order. Never a dead end.
   let nextAction
-  if (weakestCategory) {
+  if (isBoard) {
+    nextAction =
+      pct >= 80
+        ? {
+            label: 'Run the board again',
+            desc: summary.newBoardBest
+              ? 'New fastest qualifying board — see if you can beat it.'
+              : 'You qualified. Now beat your time.',
+            go: () => navigate('/board'),
+          }
+        : {
+            label: 'Drill before you re-board',
+            desc: 'An adaptive set focused on what the board exposed.',
+            go: () =>
+              navigate('/quiz', {
+                mode: 'adaptive',
+                count: 15,
+                categories: Object.keys(CATEGORY_LABEL),
+                adaptive: true,
+              }),
+          }
+  } else if (weakestCategory) {
     nextAction = {
       label: `Drill ${CATEGORY_LABEL[weakestCategory]}`,
       desc: `A focused 10-question set on your weakest category this session.`,
@@ -73,18 +95,37 @@ export default function ResultsScreen({ summary }) {
       <GoldRule className="mx-auto my-7" />
 
       <div className="grid grid-cols-2 gap-px bg-beige border border-beige mb-8">
-        <Cell
-          label="vs. last session"
-          value={delta == null ? 'first one' : `${delta >= 0 ? '+' : ''}${delta} pts`}
-          tone={delta == null ? 'muted' : delta >= 0 ? 'good' : 'bad'}
-        />
-        <Cell label="Streak" value={`${streak} day${streak === 1 ? '' : 's'}`} tone="muted" />
-        <Cell
-          label="Weakest category"
-          value={weakestCategory ? CATEGORY_LABEL[weakestCategory] : 'None — clean run'}
-          tone={weakestCategory ? 'bad' : 'good'}
-        />
-        <Cell label="Missed" value={`${total - correct} question${total - correct === 1 ? '' : 's'}`} tone="muted" />
+        {isBoard ? (
+          <>
+            <Cell label="Time" value={fmtTime(summary.durationSeconds)} tone="muted" />
+            <Cell
+              label="Fastest board"
+              value={summary.bestBoardSeconds != null ? fmtTime(summary.bestBoardSeconds) : '—'}
+              tone={summary.newBoardBest ? 'good' : 'muted'}
+            />
+            <Cell
+              label="Board result"
+              value={pct >= 80 ? 'Qualified' : 'Not yet'}
+              tone={pct >= 80 ? 'good' : 'bad'}
+            />
+            <Cell label="Missed" value={`${total - correct} question${total - correct === 1 ? '' : 's'}`} tone="muted" />
+          </>
+        ) : (
+          <>
+            <Cell
+              label="vs. last session"
+              value={delta == null ? 'first one' : `${delta >= 0 ? '+' : ''}${delta} pts`}
+              tone={delta == null ? 'muted' : delta >= 0 ? 'good' : 'bad'}
+            />
+            <Cell label="Streak" value={`${streak} day${streak === 1 ? '' : 's'}`} tone="muted" />
+            <Cell
+              label="Weakest category"
+              value={weakestCategory ? CATEGORY_LABEL[weakestCategory] : 'None — clean run'}
+              tone={weakestCategory ? 'bad' : 'good'}
+            />
+            <Cell label="Missed" value={`${total - correct} question${total - correct === 1 ? '' : 's'}`} tone="muted" />
+          </>
+        )}
       </div>
 
       <SectionLabel className="mb-3">Next challenge</SectionLabel>
@@ -106,6 +147,12 @@ export default function ResultsScreen({ summary }) {
       </div>
     </Layout>
   )
+}
+
+function fmtTime(totalSeconds) {
+  const m = Math.floor(totalSeconds / 60)
+  const s = totalSeconds % 60
+  return `${m}:${String(s).padStart(2, '0')}`
 }
 
 function Cell({ label, value, tone }) {

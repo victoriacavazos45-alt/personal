@@ -10,6 +10,10 @@ import QuizScreen from './screens/QuizScreen'
 import ResultsScreen from './screens/ResultsScreen'
 import BookmarksScreen from './screens/BookmarksScreen'
 import DashboardScreen from './screens/DashboardScreen'
+import RulesIndexScreen from './screens/RulesIndexScreen'
+import RuleReaderScreen from './screens/RuleReaderScreen'
+import BoardScreen from './screens/BoardScreen'
+import MnemonicsScreen from './screens/MnemonicsScreen'
 
 const AppContext = createContext(null)
 export const useApp = () => useContext(AppContext)
@@ -60,16 +64,21 @@ function SignedInApp({ user, localMode }) {
     questionStats: {},
     categoryStats: {},
     userStats: null,
+    annotations: [],
+    mnemonicFavorites: new Set(),
   })
 
   const refresh = useCallback(async () => {
-    const [bookmarks, questionStats, categoryStats, userStats] = await Promise.all([
-      store.getBookmarks(),
-      store.getQuestionStats(),
-      store.getCategoryStats(),
-      store.getUserStats(),
-    ])
-    setData({ loading: false, bookmarks, questionStats, categoryStats, userStats })
+    const [bookmarks, questionStats, categoryStats, userStats, annotations, mnemonicFavorites] =
+      await Promise.all([
+        store.getBookmarks(),
+        store.getQuestionStats(),
+        store.getCategoryStats(),
+        store.getUserStats(),
+        store.getAnnotations(),
+        store.getMnemonicFavorites(),
+      ])
+    setData({ loading: false, bookmarks, questionStats, categoryStats, userStats, annotations, mnemonicFavorites })
   }, [store])
 
   useEffect(() => {
@@ -108,7 +117,70 @@ function SignedInApp({ user, localMode }) {
     else window.location.reload()
   }, [])
 
-  const ctx = { user, store, localMode, ...data, refresh, toggleBookmark, signOut }
+  const addAnnotation = useCallback(
+    async (a) => {
+      const row = await store.addAnnotation(a)
+      setData((d) => ({ ...d, annotations: [...d.annotations, row] }))
+      return row
+    },
+    [store]
+  )
+
+  const updateAnnotation = useCallback(
+    async (id, note) => {
+      await store.updateAnnotation(id, note)
+      setData((d) => ({
+        ...d,
+        annotations: d.annotations.map((x) => (x.id === id ? { ...x, note: note || null } : x)),
+      }))
+    },
+    [store]
+  )
+
+  const deleteAnnotation = useCallback(
+    async (id) => {
+      await store.deleteAnnotation(id)
+      setData((d) => ({ ...d, annotations: d.annotations.filter((x) => x.id !== id) }))
+    },
+    [store]
+  )
+
+  const toggleMnemonicFavorite = useCallback(
+    async (id) => {
+      const on = !data.mnemonicFavorites.has(id)
+      setData((d) => {
+        const next = new Set(d.mnemonicFavorites)
+        if (on) next.add(id)
+        else next.delete(id)
+        return { ...d, mnemonicFavorites: next }
+      })
+      try {
+        await store.toggleMnemonicFavorite(id, on)
+      } catch {
+        setData((d) => {
+          const next = new Set(d.mnemonicFavorites)
+          if (on) next.delete(id)
+          else next.add(id)
+          return { ...d, mnemonicFavorites: next }
+        })
+      }
+    },
+    [store, data.mnemonicFavorites]
+  )
+
+  const ctx = {
+    user,
+    store,
+    localMode,
+    ...data,
+    refresh,
+    toggleBookmark,
+    signOut,
+    addAnnotation,
+    updateAnnotation,
+    deleteAnnotation,
+    toggleMnemonicFavorite,
+  }
 
   let screen
   if (route.path.startsWith('/quiz-setup')) screen = <QuizSetupScreen />
@@ -116,6 +188,10 @@ function SignedInApp({ user, localMode }) {
   else if (route.path.startsWith('/results')) screen = <ResultsScreen summary={route.state} />
   else if (route.path.startsWith('/bookmarks')) screen = <BookmarksScreen />
   else if (route.path.startsWith('/dashboard')) screen = <DashboardScreen />
+  else if (route.path.startsWith('/rules/')) screen = <RuleReaderScreen ruleId={route.path.slice('/rules/'.length)} />
+  else if (route.path.startsWith('/rules')) screen = <RulesIndexScreen />
+  else if (route.path.startsWith('/board')) screen = <BoardScreen />
+  else if (route.path.startsWith('/mnemonics')) screen = <MnemonicsScreen />
   else screen = <HomeScreen />
 
   return (

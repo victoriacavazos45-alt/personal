@@ -1,0 +1,103 @@
+{
+  "_instructions": [
+    "HOW TO FILL THIS IN",
+    "1. For each rule below, paste the official text into the 'paragraphs' array.",
+    "2. One paragraph entry per lettered/numbered subparagraph — e.g. Rule 13 (a), (b), (c), (d) become four entries. This is what highlights and margin notes anchor to.",
+    "3. Each paragraph entry is an object: { \"id\": \"r13-2\", \"text\": \"(b) ...pasted text...\" }.",
+    "4. Paragraph id convention: r<ruleNumber>-<n> for rules, a<annexNumber>-<n> for annexes, numbered from 1 in reading order. Ids must be unique across the whole file and MUST NEVER CHANGE once users start annotating (annotations are stored against these ids).",
+    "5. Include the subparagraph letter — (a), (b), (i), (ii) — at the start of the text so the reader displays it.",
+    "6. Do not change any 'id', 'num', or 'title' fields; the app links quiz questions to rules through them.",
+    "7. You may delete this _instructions array when done.",
+    "8. WHERE THE FINISHED FILE GOES: save it as  seasmart/src/data/colregs.json  (replacing the placeholder file). No other change is needed — search, the reader, highlighting, and question links pick it up automatically.",
+    "9. After replacing the file run 'npm run build' once to confirm the JSON parses (a stray quote or trailing comma is the only thing that can break it).",
+    "NOTE: any highlights/annotations made against the placeholder text will point at wrong offsets once real text is loaded — fine during development, but load the real text before real users annotate."
+  ],
+  "version": 1,
+  "parts": [
+    {
+      "id": "part-a",
+      "label": "Part A — General",
+      "rules": [
+        {
+          "id": "rule-1",
+          "num": "1",
+          "title": "Application",
+          "paragraphs": [
+            { "id": "r1-1", "text": "(a) PASTE THE TEXT OF RULE 1(a) HERE — this entry shows the pattern; add one entry per subparagraph." }
+          ]
+        },
+        { "id": "rule-2", "num": "2", "title": "Responsibility", "paragraphs": [] },
+        { "id": "rule-3", "num": "3", "title": "General Definitions", "paragraphs": [] }
+      ]
+    },
+    {
+      "id": "part-b",
+      "label": "Part B — Steering and Sailing Rules",
+      "rules": [
+        { "id": "rule-4", "num": "4", "title": "Application", "paragraphs": [] },
+        { "id": "rule-5", "num": "5", "title": "Look-out", "paragraphs": [] },
+        { "id": "rule-6", "num": "6", "title": "Safe Speed", "paragraphs": [] },
+        { "id": "rule-7", "num": "7", "title": "Risk of Collision", "paragraphs": [] },
+        { "id": "rule-8", "num": "8", "title": "Action to Avoid Collision", "paragraphs": [] },
+        { "id": "rule-9", "num": "9", "title": "Narrow Channels", "paragraphs": [] },
+        { "id": "rule-10", "num": "10", "title": "Traffic Separation Schemes", "paragraphs": [] },
+        { "id": "rule-11", "num": "11", "title": "Application", "paragraphs": [] },
+        { "id": "rule-12", "num": "12", "title": "Sailing Vessels", "paragraphs": [] },
+        { "id": "rule-13", "num": "13", "title": "Overtaking", "paragraphs": [] },
+        { "id": "rule-14", "num": "14", "title": "Head-on Situation", "paragraphs": [] },
+        { "id": "rule-15", "num": "15", "title": "Crossing Situation", "paragraphs": [] },
+        { "id": "rule-16", "num": "16", "title": "Action by Give-way Vessel", "paragraphs": [] },
+        { "id": "rule-17", "num": "17", "title": "Action by Stand-on Vessel", "paragraphs": [] },
+        { "id": "rule-18", "num": "18", "title": "Responsibilities Between Vessels", "paragraphs": [] },
+        { "id": "rule-19", "num": "19", "title": "Conduct of Vessels in Restricted Visibility", "paragraphs": [] }
+      ]
+    },
+    {
+      "id": "part-c",
+      "label": "Part C — Lights and Shapes",
+      "rules": [
+        { "id": "rule-20", "num": "20", "title": "Application", "paragraphs": [] },
+        { "id": "rule-21", "num": "21", "title": "Definitions", "paragraphs": [] },
+        { "id": "rule-22", "num": "22", "title": "Visibility of Lights", "paragraphs": [] },
+        { "id": "rule-23", "num": "23", "title": "Power-driven Vessels Underway", "paragraphs": [] },
+        { "id": "rule-24", "num": "24", "title": "Towing and Pushing", "paragraphs": [] },
+        { "id": "rule-25", "num": "25", "title": "Sailing Vessels Underway and Vessels Under Oars", "paragraphs": [] },
+        { "id": "rule-26", "num": "26", "title": "Fishing Vessels", "paragraphs": [] },
+        { "id": "rule-27", "num": "27", "title": "Vessels Not Under Command or Restricted in Their Ability to Maneuver", "paragraphs": [] },
+        { "id": "rule-28", "num": "28", "title": "Vessels Constrained by Their Draft", "paragraphs": [] },
+        { "id": "rule-29", "num": "29", "title": "Pilot Vessels", "paragraphs": [] },
+        { "id": "rule-30", "num": "30", "title": "Anchored Vessels and Vessels Aground", "paragraphs": [] },
+        { "id": "rule-31", "num": "31", "title": "Seaplanes", "paragraphs": [] }
+      ]
+    },
+    {
+      "id": "part-d",
+      "label": "Part D — Sound and Light Signals",
+      "rules": [
+        { "id": "rule-32", "num": "32", "title": "Definitions", "paragraphs": [] },
+        { "id": "rule-33", "num": "33", "title": "Equipment for Sound Signals", "paragraphs": [] },
+        { "id": "rule-34", "num": "34", "title": "Maneuvering and Warning Signals", "paragraphs": [] },
+        { "id": "rule-35", "num": "35", "title": "Sound Signals in Restricted Visibility", "paragraphs": [] },
+        { "id": "rule-36", "num": "36", "title": "Signals to Attract Attention", "paragraphs": [] },
+        { "id": "rule-37", "num": "37", "title": "Distress Signals", "paragraphs": [] }
+      ]
+    },
+    {
+      "id": "part-e",
+      "label": "Part E — Exemptions",
+      "rules": [
+        { "id": "rule-38", "num": "38", "title": "Exemptions", "paragraphs": [] }
+      ]
+    },
+    {
+      "id": "annexes",
+      "label": "Annexes",
+      "rules": [
+        { "id": "annex-1", "num": "Annex I", "title": "Positioning and Technical Details of Lights and Shapes", "paragraphs": [] },
+        { "id": "annex-2", "num": "Annex II", "title": "Additional Signals for Fishing Vessels Fishing in Close Proximity", "paragraphs": [] },
+        { "id": "annex-3", "num": "Annex III", "title": "Technical Details of Sound Signal Appliances", "paragraphs": [] },
+        { "id": "annex-4", "num": "Annex IV", "title": "Distress Signals", "paragraphs": [] }
+      ]
+    }
+  ]
+}

@@ -16,7 +16,23 @@ React + Tailwind CSS (no component libraries), Supabase auth + database.
 - Progress dashboard: daily/weekly/monthly trend chart, category breakdown (custom SVG, no chart libs)
 - Retention: daily streak, session-end summary card, micro-celebrations, next-challenge prompt, personal bests
 
-Phase 2 (Rules Index, Board Mode, Mnemonics) and Phase 3 (Lights Lab) are not started — pending confirmation.
+**Phase 2 — Rules Index, Board Mode, Mnemonic Library: complete** (rule text pending, see below).
+
+- Rules Index: searchable, Kindle-style reader — select text to highlight, tap a highlight for margin notes; annotations persist and sync. Rules link to the quiz questions that cite them ("Drill these questions").
+- Board Mode: 12-question timed qual-board simulation mixing multiple choice (20s) and fill-in-the-blank (30s). No hints; a miss flashes the answer briefly and moves on. Fastest run at ≥80% is tracked as a personal best.
+- Mnemonic Library: 24 curated Navy/USCG mnemonics by category, with favorites.
+
+### Loading the official rule text
+
+The Rules Index ships with **placeholder text**. The publication text is data, not code:
+
+1. Open `docs/colregs-template.json` — it contains the full skeleton (every rule and annex, ids prefilled) and step-by-step instructions.
+2. Paste the official text from the USCG Navigation Center site into each rule's `paragraphs` array (one entry per lettered subparagraph).
+3. Save the finished file as **`src/data/colregs.json`**, replacing the placeholder. Nothing else changes — search, the reader, annotations, and question links pick it up automatically.
+
+Paragraph ids anchor user annotations: never change them after launch. Fill-in-the-blank answers in Board Mode are matched after normalization (case, punctuation, whitespace) against an explicit list of accepted variants per item (`src/data/boardItems.js`).
+
+Phase 3 (Lights Lab) is not started — pending confirmation.
 
 ## Running locally
 

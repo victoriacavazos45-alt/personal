@@ -75,10 +75,18 @@ export default function DashboardScreen() {
 
   return (
     <Layout title="Progress" backTo="/home">
-      <div className="grid grid-cols-3 gap-px bg-beige border border-beige mb-8">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-px bg-beige border border-beige mb-8">
         <Best label="Highest score" value={userStats?.best_score_pct != null ? `${userStats.best_score_pct}%` : '—'} />
         <Best label="Current streak" value={`${streak}d`} />
         <Best label="Longest streak" value={`${userStats?.longest_streak ?? 0}d`} />
+        <Best
+          label="Fastest board"
+          value={
+            userStats?.best_board_seconds != null
+              ? `${Math.floor(userStats.best_board_seconds / 60)}:${String(userStats.best_board_seconds % 60).padStart(2, '0')}`
+              : '—'
+          }
+        />
       </div>
 
       <section className="mb-10">
