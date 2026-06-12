@@ -22,15 +22,17 @@ React + Tailwind CSS (no component libraries), Supabase auth + database.
 - Board Mode: 12-question timed qual-board simulation mixing multiple choice (20s) and fill-in-the-blank (30s). No hints; a miss flashes the answer briefly and moves on. Fastest run at ≥80% is tracked as a personal best.
 - Mnemonic Library: 24 curated Navy/USCG mnemonics by category, with favorites.
 
-### Loading the official rule text
+### Rule text provenance
 
-The Rules Index ships with **placeholder text**. The publication text is data, not code:
+`src/data/colregs.json` contains the complete International Regulations (COLREGs 1972 as amended — Rules 1–41 including Part F, plus Annexes I–IV; ~12,000 words, 464 paragraphs). The text is the public-domain treaty text as published by the USCG. Because navcen.uscg.gov blocks automated retrieval, it was imported from a community transcription and then:
 
-1. Open `docs/colregs-template.json` — it contains the full skeleton (every rule and annex, ids prefilled) and step-by-step instructions.
-2. Paste the official text from the USCG Navigation Center site into each rule's `paragraphs` array (one entry per lettered subparagraph).
-3. Save the finished file as **`src/data/colregs.json`**, replacing the placeholder. Nothing else changes — search, the reader, annotations, and question links pick it up automatically.
+- cross-validated against the 72 independently-written verbatim rule excerpts in the quiz bank (all match);
+- spot-checked on key figures (22.5°, 112.5°, 135°, 225°, 4.5 m, 6 miles, 110 dB, 300 mm, 70–200 Hz…);
+- patched for 26 identified transcription typos (all in the annexes; list in the git history).
 
-Paragraph ids anchor user annotations: never change them after launch. Fill-in-the-blank answers in Board Mode are matched after normalization (case, punctuation, whitespace) against an explicit list of accepted variants per item (`src/data/boardItems.js`).
+**Recommended before relying on it for qualification: a human spot-check against navcen.uscg.gov.** To re-import or correct text, edit `src/data/colregs.json` directly — `docs/colregs-template.json` documents the schema. Paragraph ids anchor user annotations: never change them after launch (editing a paragraph's text shifts highlight offsets for that paragraph).
+
+Fill-in-the-blank answers in Board Mode are matched after normalization (case, punctuation, whitespace) against an explicit list of accepted variants per item (`src/data/boardItems.js`).
 
 Phase 3 (Lights Lab) is not started — pending confirmation.
 
