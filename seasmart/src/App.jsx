@@ -14,6 +14,7 @@ import RulesIndexScreen from './screens/RulesIndexScreen'
 import RuleReaderScreen from './screens/RuleReaderScreen'
 import BoardScreen from './screens/BoardScreen'
 import MnemonicsScreen from './screens/MnemonicsScreen'
+import LightsLabScreen from './screens/LightsLabScreen'
 
 const AppContext = createContext(null)
 export const useApp = () => useContext(AppContext)
@@ -192,6 +193,7 @@ function SignedInApp({ user, localMode }) {
   else if (route.path.startsWith('/rules')) screen = <RulesIndexScreen />
   else if (route.path.startsWith('/board')) screen = <BoardScreen />
   else if (route.path.startsWith('/mnemonics')) screen = <MnemonicsScreen />
+  else if (route.path.startsWith('/lights')) screen = <LightsLabScreen />
   else screen = <HomeScreen />
 
   return (

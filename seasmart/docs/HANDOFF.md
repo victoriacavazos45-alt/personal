@@ -9,8 +9,9 @@ watchstanders. React 18 + Vite + Tailwind 3, **no component libraries** (all cus
 Supabase for auth + data. The PRD is the source of truth for scope; build order is
 Phase 1 → 2 → 3 with user confirmation between phases.
 
-**Phases 1 and 2 are complete, tested, and pushed. Phase 3 (Lights Lab) is NOT started — the
-user explicitly said to wait.**
+**Phases 1 and 2 are complete, tested, and pushed. Phase 3's 2D Lights Lab is complete
+(`src/data/vessels.js` + `screens/LightsLabScreen.jsx`, route `/lights`). The 3D extension is
+NOT started — gated on founder confirmation and Jane's data licensing per the PRD.**
 
 ## Repo / branch state
 

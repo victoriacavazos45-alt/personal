@@ -48,6 +48,11 @@ export default function HomeScreen() {
       action: () => navigate('/rules'),
     },
     {
+      title: 'Lights Lab',
+      desc: 'Vessel light configurations, day and night. Tap a light for its rule.',
+      action: () => navigate('/lights'),
+    },
+    {
       title: 'Mnemonic Library',
       desc: 'The sayings the fleet actually remembers, organized by rule.',
       action: () => navigate('/mnemonics'),
